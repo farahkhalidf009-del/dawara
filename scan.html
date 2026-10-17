@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>فحص الغرض - دوّرها</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:#000;
+    color:#eafff3;
+    min-height:100dvh;
+    overflow:hidden;
+}
+
+video,img{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+img{display:none}
+
+.grid{
+    position:fixed;
+    inset:0;
+    background:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size:40px 40px;
+    pointer-events:none;
+}
+
+.fade{
+    position:fixed;
+    inset:0;
+    background:radial-gradient(circle, transparent 40%, rgba(0,0,0,0.85) 80%);
+}
+
+.brand-chip{
+    position:fixed;
+    top:max(12px, env(safe-area-inset-top));
+    left:max(10px, env(safe-area-inset-left));
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(0,0,0,0.45);
+    border:1px solid rgba(255,255,255,0.2);
+    border-radius:30px;
+    padding:7px 12px;
+    font-size:12px;
+    z-index:9999;
+}
+
+.brand-chip img{
+    position:static;
+    width:26px;
+    height:26px;
+    object-fit:contain;
+    display:block;
+}
+
+.top-actions{
+    position:fixed;
+    top:max(12px, env(safe-area-inset-top));
+    right:max(10px, env(safe-area-inset-right));
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    z-index:9999;
+    max-width:min(45vw, 220px);
+}
+
+.top-btn{
+    position:static;
+    width:100%;
+    padding:10px 18px;
+    border:none;
+    border-radius:22px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+    min-height:40px;
+}
+
+.home-btn{
+    background:#6dff9f;
+    color:#003b1f;
+}
+
+.about-btn{
+    background:#ffffff;
+    color:#0d3a27;
+}
+
+.map-btn{
+    background:#6dd9ff;
+    color:#062a3a;
+}
+
+.scan-box{
+    position:fixed;
+    top:50%;
+    left:50%;
+    width:min(70vw, 280px);
+    height:min(70vw, 280px);
+    transform:translate(-50%,-50%);
+    border:1.5px solid rgba(109,255,159,0.7);
+}
+
+.scan-corner{
+    position:absolute;
+    width:22px;
+    height:22px;
+    border:3px solid #6dff9f;
+}
+.tl{top:-2px;left:-2px;border-right:none;border-bottom:none}
+.tr{top:-2px;right:-2px;border-left:none;border-bottom:none}
+.bl{bottom:-2px;left:-2px;border-right:none;border-top:none}
+.br{bottom:-2px;right:-2px;border-left:none;border-top:none}
+
+.capture{
+    position:fixed;
+    bottom:calc(18px + env(safe-area-inset-bottom));
+    left:50%;
+    transform:translateX(-50%);
+    width:clamp(68px, 16vw, 86px);
+    height:clamp(68px, 16vw, 86px);
+    border-radius:50%;
+    background:radial-gradient(circle,#6dff9f,#2fa866);
+    box-shadow:0 0 40px rgba(109,255,159,.6);
+    cursor:pointer;
+    border:none;
+    z-index:9999;
+}
+
+.result{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    padding:24px;
+    border-radius:22px;
+    background:rgba(0,0,0,0.88);
+    display:none;
+    text-align:center;
+    width:min(94vw, 360px);
+    max-height:calc(100dvh - 90px);
+    overflow:auto;
+    z-index:9999;
+}
+
+.result h2{
+    margin:0 0 10px;
+    color:#6dff9f;
+    font-size:22px;
+}
+
+.result p{
+    font-size:13px;
+    opacity:.93;
+    line-height:1.7;
+    margin:0;
+}
+
+.material-chip{
+    margin-top:12px;
+    display:inline-block;
+    background:#1d4f3a;
+    color:#d8ffe8;
+    padding:6px 10px;
+    border-radius:14px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.actions{
+    margin-top:16px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.actions button{
+    padding:12px;
+    border-radius:12px;
+    border:none;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    min-height:44px;
+}
+
+.analyze-btn{
+    background:linear-gradient(135deg,#6dff9f,#2fa866);
+    color:#003b1f;
+}
+
+.center-btn{
+    background:#0f5f41;
+    color:#eafff3;
+}
+
+.all-btn{
+    background:#145338;
+    color:#f0fff7;
+}
+
+.retake-btn{
+    background:#2c2c2c;
+    color:#f4f4f4;
+}
+
+.actions button:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+}
+
+@media (max-width:900px){
+    .top-actions{
+        max-width:min(55vw, 220px);
+    }
+
+    .scan-box{
+        width:min(74vw, 270px);
+        height:min(74vw, 270px);
+    }
+}
+
+@media (max-width:700px){
+    .top-actions{
+        right:8px;
+        gap:6px;
+        max-width:min(58vw, 180px);
+    }
+
+    .top-btn{
+        font-size:11px;
+        padding:8px 10px;
+        min-height:36px;
+    }
+
+    .brand-chip{
+        left:8px;
+        font-size:11px;
+        padding:6px 8px;
+    }
+
+    .brand-chip span{
+        display:none;
+    }
+
+    .brand-chip img{
+        width:22px;
+        height:22px;
+    }
+
+    .scan-box{
+        width:min(76vw, 240px);
+        height:min(76vw, 240px);
+    }
+}
+
+@media (max-height:560px){
+    .scan-box{
+        width:min(58vh, 210px);
+        height:min(58vh, 210px);
+    }
+
+    .result{
+        top:54%;
+        max-height:calc(100dvh - 26px);
+    }
+}
+</style>
+</head>
+
+<body>
+<div class="top-actions">
+    <button class="top-btn home-btn" onclick="goHome()">العودة للرئيسية</button>
+    <button class="top-btn about-btn" onclick="goAbout()">تعرف علينا</button>
+    <button class="top-btn map-btn" onclick="goMap()">خريطة التدوير</button>
+</div>
+
+<div class="brand-chip">
+    <img src="logo.png" alt="دوّرها">
+    <span>دوّرها | فحص ذكي</span>
+</div>
+
+<video id="video" autoplay playsinline></video>
+<img id="preview" alt="Preview">
+<div class="grid"></div>
+<div class="fade"></div>
+
+<div class="scan-box">
+    <div class="scan-corner tl"></div>
+    <div class="scan-corner tr"></div>
+    <div class="scan-corner bl"></div>
+    <div class="scan-corner br"></div>
+</div>
+
+<button class="capture" onclick="capture()" title="التقاط"></button>
+
+<div class="result" id="result">
+    <h2 id="resultTitle">التقط صورة للغرض</h2>
+    <p id="resultText">بعد التقاط الصورة اضغط تحليل الغرض.</p>
+    <span id="objectChip" class="material-chip" style="display:none"></span>
+    <span id="materialChip" class="material-chip" style="display:none"></span>
+
+    <div class="actions">
+        <button class="analyze-btn" id="analyzeBtn">تحليل الغرض</button>
+        <button class="center-btn" id="centerBtn" style="display:none">أقرب مصنع لموقعي الحالي</button>
+        <button class="all-btn" id="allBtn" style="display:none">رؤية جميع المصانع في الأردن</button>
+        <button class="retake-btn" id="retakeBtn">التقاط صورة جديدة</button>
+    </div>
+</div>
+
+<script>
+const AUTH_KEY = "dorha_auth";
+const SCAN_RESULT_KEY = "dorha_scan_result";
+
+const MATERIAL_LABELS = {
+    plastic: "بلاستيك",
+    paper: "ورق",
+    glass: "زجاج",
+    metal: "معادن",
+    electronics: "إلكترونيات",
+    organic: "مخلفات عضوية",
+    mixed: "مواد مختلطة"
+};
+
+const MATERIAL_ALIASES = {
+    plastic: "plastic",
+    plastics: "plastic",
+    "plastic bottle": "plastic",
+    "بلاستيك": "plastic",
+    pet: "plastic",
+    hdpe: "plastic",
+    paper: "paper",
+    cardboard: "paper",
+    carton: "paper",
+    books: "paper",
+    newspaper: "paper",
+    "ورق": "paper",
+    "كرتون": "paper",
+    "كتب": "paper",
+    glass: "glass",
+    "زجاج": "glass",
+    metal: "metal",
+    metals: "metal",
+    aluminum: "metal",
+    aluminium: "metal",
+    steel: "metal",
+    "معدن": "metal",
+    "معادن": "metal",
+    electronics: "electronics",
+    electronic: "electronics",
+    ewaste: "electronics",
+    battery: "electronics",
+    batteries: "electronics",
+    charger: "electronics",
+    "الكترونيات": "electronics",
+    "إلكترونيات": "electronics",
+    "بطارية": "electronics",
+    "بطاريات": "electronics",
+    organic: "organic",
+    "عضوي": "organic",
+    mixed: "mixed",
+    other: "mixed",
+    "أخرى": "mixed",
+    "مختلط": "mixed"
+};
+
+// مطابقة مرنة: إذا أعاد النموذج صيغة غير معروفة نبحث عن كلمات مفتاحية قبل الاحتياط إلى mixed
+const MATERIAL_KEYWORDS = [
+    ["plastic", "plastic"],
+    ["بلاستيك", "plastic"],
+    ["paper", "paper"],
+    ["ورق", "paper"],
+    ["كرتون", "paper"],
+    ["cardboard", "paper"],
+    ["carton", "paper"],
+    ["glass", "glass"],
+    ["زجاج", "glass"],
+    ["metal", "metal"],
+    ["معدن", "metal"],
+    ["alumin", "metal"],
+    ["steel", "metal"],
+    ["electronic", "electronics"],
+    ["إلكترونيات", "electronics"],
+    ["الكترونيات", "electronics"],
+    ["بطاري", "electronics"],
+    ["battery", "electronics"],
+    ["organic", "organic"],
+    ["عضوي", "organic"]
+];
+
+function normalizeMaterial(material){
+    const raw = String(material || "").trim().toLowerCase();
+    if(!raw){
+        return "mixed";
+    }
+    if(MATERIAL_ALIASES[raw]){
+        return MATERIAL_ALIASES[raw];
+    }
+    for(let i = 0; i < MATERIAL_KEYWORDS.length; i++){
+        if(raw.indexOf(MATERIAL_KEYWORDS[i][0]) !== -1){
+            return MATERIAL_KEYWORDS[i][1];
+        }
+    }
+    return "mixed";
+}
+
+// تحويل قيم recyclable القادمة كنص أو رقم إلى قيمة منطقية حقيقية
+function parseRecyclable(value){
+    if(typeof value === "boolean"){
+        return value;
+    }
+    if(typeof value === "number"){
+        return value !== 0;
+    }
+    if(typeof value === "string"){
+        const v = value.trim().toLowerCase();
+        if(v === "true" || v === "1" || v === "yes"){
+            return true;
+        }
+        if(v === "false" || v === "0" || v === "no"){
+            return false;
+        }
+    }
+    return Boolean(value);
+}
+
+function getAuthData(){
+    const raw = localStorage.getItem(AUTH_KEY);
+    if(!raw){
+        return null;
+    }
+    try{
+        const parsed = JSON.parse(raw);
+        if(!parsed || !parsed.method || !parsed.identifier){
+            return null;
+        }
+        return parsed;
+    }catch(error){
+        localStorage.removeItem(AUTH_KEY);
+        return null;
+    }
+}
+
+function ensureAuthData(){
+    const existing = getAuthData();
+    if(existing){
+        return existing;
+    }
+
+    // Allow the app to run on fresh devices without a separate login page.
+    const guest = {
+        method: "guest",
+        identifier: "guest-" + Date.now()
+    };
+    localStorage.setItem(AUTH_KEY, JSON.stringify(guest));
+    return guest;
+}
+
+const auth = ensureAuthData();
+
+const video = document.getElementById("video");
+const preview = document.getElementById("preview");
+const resultBox = document.getElementById("result");
+const resultTitle = document.getElementById("resultTitle");
+const resultText = document.getElementById("resultText");
+const materialChip = document.getElementById("materialChip");
+const objectChip = document.getElementById("objectChip");
+const analyzeBtn = document.getElementById("analyzeBtn");
+const centerBtn = document.getElementById("centerBtn");
+const allBtn = document.getElementById("allBtn");
+const retakeBtn = document.getElementById("retakeBtn");
+
+let cameraStream = null;
+let latestAnalysis = null;
+let capturedImageDataUrl = "";
+
+if(auth){
+    navigator.mediaDevices.getUserMedia({
+        video:{facingMode:"environment"}
+    }).then(function(stream){
+        cameraStream = stream;
+        video.srcObject = stream;
+    }).catch(function(){
+        alert("تعذّر تشغيل الكاميرا. تأكد من صلاحيات الكاميرا في المتصفح.");
+    });
+}
+
+function extractResponseText(apiResponse){
+    if(apiResponse && typeof apiResponse.output_text === "string" && apiResponse.output_text.trim()){
+        return apiResponse.output_text.trim();
+    }
+
+    if(!apiResponse || !Array.isArray(apiResponse.output)){
+        return "";
+    }
+
+    const chunks = [];
+    apiResponse.output.forEach(function(item){
+        if(!item || !Array.isArray(item.content)){
+            return;
+        }
+        item.content.forEach(function(part){
+            if(part && typeof part.text === "string" && part.text.trim()){
+                chunks.push(part.text.trim());
+            }
+        });
+    });
+
+    return chunks.join("\n").trim();
+}
+
+function parseJsonFromText(text){
+    const trimmed = String(text || "").trim();
+    if(!trimmed){
+        throw new Error("empty_model_output");
+    }
+
+    try{
+        return JSON.parse(trimmed);
+    }catch(error){
+        const match = trimmed.match(/\{[\s\S]*\}/);
+        if(!match){
+            throw new Error("invalid_json_output");
+        }
+        return JSON.parse(match[0]);
+    }
+}
+
+// ضغط الصورة قبل إرسالها: يسرّع التحليل ويخفض الاستهلاك على الجوال
+function downscaleImage(dataUrl, maxDim){
+    return new Promise(function(resolve){
+        const img = new Image();
+        img.onload = function(){
+            const w = img.naturalWidth;
+            const h = img.naturalHeight;
+            if(!w || !h){
+                resolve(dataUrl);
+                return;
+            }
+            const scale = Math.min(1, maxDim / Math.max(w, h));
+            if(scale >= 1){
+                resolve(dataUrl);
+                return;
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(w * scale);
+            canvas.height = Math.round(h * scale);
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", 0.85));
+        };
+        img.onerror = function(){
+            resolve(dataUrl);
+        };
+        img.src = dataUrl;
+    });
+}
+
+
+
+async function analyzeWithApi(rawDataUrl){
+    const imageDataUrl = await downscaleImage(rawDataUrl, 1024);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(function(){ controller.abort(); }, 45000);
+
+    let response;
+    try{
+        response = await fetch("/api/analyze", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                image: imageDataUrl
+            }),
+            signal: controller.signal
+        });
+    }catch(fetchError){
+        clearTimeout(timeoutId);
+        if(fetchError && fetchError.name === "AbortError"){
+            throw new Error("analysis_timeout");
+        }
+        throw fetchError;
+    }
+    clearTimeout(timeoutId);
+
+    if(!response.ok){
+        if(response.status === 503){
+            throw new Error("missing_api_key");
+        }
+        if(response.status === 401){
+            throw new Error("invalid_api_key");
+        }
+        if(response.status === 429){
+            throw new Error("rate_limited");
+        }
+        throw new Error("api_http_" + response.status);
+    }
+
+    const data = await response.json();
+    const text = extractResponseText(data);
+    const parsed = parseJsonFromText(text);
+
+    const materialKey = normalizeMaterial(parsed.material);
+    const objectName = String(parsed.object || parsed.item || "").trim();
+
+    return {
+        objectName: objectName || "غير محدد",
+        recyclable: parseRecyclable(parsed.recyclable),
+        material: materialKey,
+        materialLabel: MATERIAL_LABELS[materialKey] || materialKey,
+        message: String(parsed.message || "").trim()
+    };
+}
+
+function resetResultUi(){
+    objectChip.style.display = "none";
+    materialChip.style.display = "none";
+    centerBtn.style.display = "none";
+    allBtn.style.display = "none";
+}
+
+function capture(){
+    if(!video.videoWidth || !video.videoHeight){
+        alert("يرجى الانتظار حتى يتم تشغيل الكاميرا ثم حاول مرة أخرى.");
+        return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    capturedImageDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    preview.src = capturedImageDataUrl;
+    preview.style.display = "block";
+    video.style.display = "none";
+
+    latestAnalysis = null;
+    sessionStorage.removeItem(SCAN_RESULT_KEY);
+    resetResultUi();
+    analyzeBtn.disabled = false;
+
+    resultTitle.innerText = "تم التقاط الصورة";
+    resultText.innerText = "اضغط على تحليل الغرض لبدء التحليل عبر الذكاء الاصطناعي.";
+    resultBox.style.display = "block";
+}
+
+async function analyzeObject(){
+    if(!capturedImageDataUrl){
+        alert("قم بالتقاط صورة أولاً.");
+        return;
+    }
+
+    analyzeBtn.disabled = true;
+    retakeBtn.disabled = true;
+    resetResultUi();
+    resultTitle.innerText = "جارٍ تحليل الغرض...";
+    resultText.innerText = "يرجى الانتظار قليلاً.";
+
+    try{
+        const analysis = await analyzeWithApi(capturedImageDataUrl);
+
+        latestAnalysis = {
+            objectName: analysis.objectName,
+            material: analysis.material,
+            materialLabel: analysis.materialLabel,
+            recyclable: analysis.recyclable,
+            message: analysis.message,
+            capturedAt: new Date().toISOString(),
+            valid: true
+        };
+
+        sessionStorage.setItem(SCAN_RESULT_KEY, JSON.stringify(latestAnalysis));
+
+        if(analysis.objectName && analysis.objectName !== "غير محدد"){
+            objectChip.innerText = "الغرض: " + analysis.objectName;
+            objectChip.style.display = "inline-block";
+        }
+        materialChip.innerText = "نوع المادة: " + analysis.materialLabel;
+        materialChip.style.display = "inline-block";
+
+        if(analysis.recyclable){
+            resultTitle.innerText = "✔ قابل لإعادة التدوير";
+            resultText.innerText = analysis.message || "تم التأكد أن الغرض قابل لإعادة التدوير.";
+            centerBtn.style.display = "block";
+            allBtn.style.display = "block";
+        }else{
+            resultTitle.innerText = "✖ غير قابل لإعادة التدوير";
+            resultText.innerText = analysis.message || "الغرض الحالي غير مناسب لإعادة التدوير حسب نتيجة التحليل.";
+            centerBtn.style.display = "none";
+            allBtn.style.display = "none";
+        }
+    }catch(error){
+        latestAnalysis = null;
+        sessionStorage.removeItem(SCAN_RESULT_KEY);
+        resetResultUi();
+
+        if(error && error.message === "missing_api_key"){
+            resultTitle.innerText = "مفتاح API غير موجود";
+            resultText.innerText = "خدمة الفحص غير متاحة حاليًا. يرجى المحاولة لاحقًا.";
+        }else if(error && error.message === "invalid_api_key"){
+            resultTitle.innerText = "مفتاح API غير صالح";
+            resultText.innerText = "تعذّر الاتصال بخدمة الفحص. يرجى المحاولة لاحقًا.";
+        }else if(error && error.message === "rate_limited"){
+            resultTitle.innerText = "تم تجاوز حد الاستخدام";
+            resultText.innerText = "المفتاح وصل للحد المسموح مؤقتاً. انتظري دقيقة ثم أعيدي المحاولة.";
+        }else if(error && error.message === "analysis_timeout"){
+            resultTitle.innerText = "انتهت مدة التحليل";
+            resultText.innerText = "استغرق التحليل وقتاً طويلاً جداً. تحققي من قوة الاتصال بالإنترنت ثم أعيدي المحاولة.";
+        }else{
+            resultTitle.innerText = "تعذّر التحليل";
+            resultText.innerText = "تعذّر تنفيذ التحليل عبر API. تحققي من الاتصال بالإنترنت ومن صلاحية المفتاح.";
+        }
+    }finally{
+        analyzeBtn.disabled = false;
+        retakeBtn.disabled = false;
+    }
+}
+
+function goNearestCenter(){
+    if(!latestAnalysis || !latestAnalysis.valid){
+        alert("يرجى تحليل الغرض أولاً.");
+        return;
+    }
+    if(!latestAnalysis.recyclable){
+        alert("النتيجة الحالية غير قابلة لإعادة التدوير.");
+        return;
+    }
+    window.location.href = "map.html?mode=nearest&source=scan";
+}
+
+function goAllFactories(){
+    window.location.href = "map.html?mode=all&source=scan";
+}
+
+function retake(){
+    capturedImageDataUrl = "";
+    preview.style.display = "none";
+    video.style.display = "block";
+    resultBox.style.display = "none";
+    latestAnalysis = null;
+    sessionStorage.removeItem(SCAN_RESULT_KEY);
+    resetResultUi();
+}
+
+function goHome(){
+    window.location.href = "indx.html";
+}
+
+function goAbout(){
+    window.location.href = "about.html";
+}
+
+function goMap(){
+    window.location.href = "map.html";
+}
+
+window.addEventListener("beforeunload", function(){
+    if(cameraStream){
+        cameraStream.getTracks().forEach(function(track){ track.stop(); });
+    }
+});
+
+analyzeBtn.addEventListener("click", analyzeObject);
+centerBtn.addEventListener("click", goNearestCenter);
+allBtn.addEventListener("click", goAllFactories);
+retakeBtn.addEventListener("click", retake);
+</script>
+
+</body>
+</html>

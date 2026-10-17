@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>دوّرها</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="logo.png">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box}
+
+:root{
+    --page-pad:clamp(14px,4vw,50px);
+}
+
+body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    direction:rtl;
+    background:#f3f9f6;
+    min-height:100dvh;
+    background-image:url("image.jpeg");
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    color:#1f3d2b;
+}
+
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px 20px;
+    padding:
+        calc(clamp(10px,1.8vw,18px) + env(safe-area-inset-top))
+        var(--page-pad)
+        clamp(10px,1.8vw,18px);
+    background:#ffffffcc;
+    backdrop-filter:blur(10px);
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+.logo img{
+    height:clamp(58px,9vw,90px);
+    width:auto;
+}
+
+.nav-links{
+    display:flex;
+    align-items:center;
+    gap:clamp(8px,1.8vw,18px);
+    flex-wrap:wrap;
+}
+
+.nav-links a{
+    text-decoration:none;
+    color:#1f3d2b;
+    font-weight:600;
+    font-size:clamp(13px,1.8vw,14px);
+    white-space:nowrap;
+}
+
+.nav-links a:hover{
+    color:#2f6f3e;
+}
+
+.hero{
+    display:grid;
+    grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);
+    align-items:center;
+    padding:clamp(38px,8vw,90px) var(--page-pad);
+    gap:clamp(22px,4vw,40px);
+}
+
+.hero-text,
+.hero-visual{
+    min-width:0;
+}
+
+.hero-text h1{
+    font-size:clamp(30px,5.6vw,44px);
+    line-height:1.25;
+    margin:0 0 20px;
+    color:#2f6f3e;
+}
+
+.hero-buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+}
+
+.hero-buttons a{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:48px;
+    padding:12px clamp(18px,3vw,32px);
+    border-radius:30px;
+    text-decoration:none;
+    font-weight:600;
+    font-size:clamp(14px,2.2vw,15px);
+}
+
+.btn-main{
+    background:linear-gradient(135deg,#3f8f52,#2f6f3e);
+    color:#fff;
+    box-shadow:0 10px 30px rgba(47,111,62,0.25);
+}
+
+.btn-outline{
+    border:2px solid #2f6f3e;
+    color:#2f6f3e;
+    background:rgba(255,255,255,0.65);
+}
+
+.hero-visual{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.blob{
+    width:min(100%,560px);
+    min-height:clamp(250px,38vw,360px);
+    background:rgba(63,143,82,0.85);
+    border-radius:60% 40% 30% 70% / 60% 30% 70% 40%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:clamp(24px,4vw,40px);
+    color:#fff;
+}
+
+.blob h2{
+    font-size:clamp(20px,3vw,22px);
+    margin:0 0 12px;
+    color:#fff;
+}
+
+.blob p{
+    font-size:clamp(14px,2.2vw,15px);
+    line-height:1.8;
+    margin:0;
+}
+
+.features{
+    background:transparent;
+    padding:clamp(40px,8vw,80px) var(--page-pad);
+    text-align:center;
+    border-radius:20px;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));
+    gap:clamp(14px,3vw,30px);
+    max-width:1100px;
+    margin:auto;
+}
+
+.card{
+    background:rgba(255,255,255,0.9);
+    padding:clamp(20px,3.4vw,30px) clamp(16px,3vw,25px);
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.card span{
+    font-size:clamp(28px,4.6vw,36px);
+    display:block;
+    margin-bottom:12px;
+}
+
+.card p{
+    font-size:clamp(13px,2vw,14px);
+    line-height:1.7;
+    opacity:.9;
+    color:#1f3d2b;
+}
+
+footer{
+    background:#ffffffcc;
+    color:#1f3d2b;
+    text-align:center;
+    padding:18px var(--page-pad) calc(18px + env(safe-area-inset-bottom));
+    font-size:13px;
+    backdrop-filter:blur(10px);
+}
+
+@media(max-width:960px){
+    .navbar{
+        flex-direction:column;
+        justify-content:center;
+        text-align:center;
+    }
+
+    .nav-links{
+        justify-content:center;
+    }
+
+    .hero{
+        grid-template-columns:1fr;
+        text-align:center;
+        padding-top:clamp(28px,6vw,56px);
+    }
+
+    .hero-buttons{
+        justify-content:center;
+    }
+}
+
+@media(max-width:680px){
+    .hero-buttons a{
+        width:100%;
+    }
+
+    .blob{
+        border-radius:34px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+    <div class="logo">
+    <img src="logo.png" alt="دورها" class="logo-img">
+</div>
+    <div class="nav-links">
+        <a href="indx.html">الرئيسية</a>
+        <a href="about.html">تعرف علينا</a>
+        <a href="scan.html">ابدأ الآن</a>
+        <a href="map.html">خريطة التدوير</a>
+    </div>
+</div>
+
+<section class="hero">
+    <div class="hero-text">
+        <h1>دوّرها بذكاء ♻️</h1>
+
+        <div class="hero-buttons">
+            <a href="scan.html" class="btn-main">ابدأ الآن</a>
+            <a href="about.html" class="btn-outline">تعرف علينا</a>
+        </div>
+    </div>
+
+    <div class="hero-visual">
+        <div class="blob">
+            <h2>نبذة عن الموقع</h2>
+            <p>
+                منصة رقمية ذكية تساعد المستخدمين على التعامل مع النفايات بوعي
+                من خلال تحليل الصور وتوجيههم لإعادة التدوير أو إعادة الاستخدام
+                بطريقة سهلة تساهم في حماية البيئة وبناء مستقبل أنظف.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="cards">
+        <div class="card">
+            <span>🤖</span>
+            <p>تحليل ذكي للمواد باستخدام الذكاء الاصطناعي</p>
+        </div>
+        <div class="card">
+            <span>♻️</span>
+            <p>تحديد قابلية إعادة التدوير بدقة</p>
+        </div>
+        <div class="card">
+            <span>🗺️</span>
+            <p>إرشادك إلى أقرب مركز تدوير مناسب</p>
+        </div>
+        <div class="card">
+            <span>💰</span>
+            <p>تقدير القيمة الاقتصادية للنفايات</p>
+        </div>
+    </div>
+</section>
+
+<footer>
+    © 2026 دوّرها - بيئتنا هويتنا
+</footer>
+
+</body>
+</html>

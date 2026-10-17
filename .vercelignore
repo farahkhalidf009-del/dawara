@@ -1,0 +1,8 @@
+.git/
+node_modules/
+_test/
+.env
+.env.*
+config.js
+README.md
+*.zip

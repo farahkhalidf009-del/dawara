@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>خريطة مصانع التدوير - دوّرها</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background:#eef7f1;
+    color:#173c2b;
+    min-height:100dvh;
+}
+
+.topbar{
+    position:sticky;
+    top:0;
+    z-index:1200;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    padding:
+        calc(10px + env(safe-area-inset-top))
+        clamp(10px,2.2vw,16px)
+        10px;
+    background:#ffffffdd;
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid #dbece1;
+    flex-wrap:wrap;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:700;
+    font-size:clamp(14px,1.9vw,16px);
+    color:#145338;
+    min-width:0;
+}
+
+.brand img{
+    width:clamp(28px,3.5vw,34px);
+    height:clamp(28px,3.5vw,34px);
+    object-fit:contain;
+    flex:0 0 auto;
+}
+
+.brand span{
+    line-height:1.4;
+}
+
+.top-links{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.top-links a{
+    text-decoration:none;
+    border:none;
+    background:#e7f6ee;
+    color:#145338;
+    border-radius:18px;
+    padding:8px 12px;
+    font-size:12px;
+    font-weight:600;
+    min-height:36px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.layout{
+    display:grid;
+    grid-template-columns:minmax(320px,380px) minmax(0,1fr);
+    min-height:calc(100dvh - 56px);
+}
+
+.panel{
+    background:#f7fcf9;
+    border-left:1px solid #dbece1;
+    padding:clamp(10px,1.8vw,14px);
+    overflow:auto;
+    min-width:0;
+}
+
+.panel h1{
+    margin:0 0 8px;
+    font-size:20px;
+    color:#145338;
+}
+
+.hint{
+    margin:0 0 12px;
+    font-size:13px;
+    color:#3f6957;
+    line-height:1.6;
+}
+
+.scan-info{
+    margin:0 0 12px;
+    padding:10px;
+    border-radius:10px;
+    background:#e8fff4;
+    border:1px solid #bbf0d2;
+    font-size:12px;
+    line-height:1.6;
+}
+
+.scan-info.warn{
+    background:#fff7e8;
+    border-color:#edd7a8;
+}
+
+.control{
+    margin-bottom:10px;
+}
+
+.control input,
+.control select{
+    width:100%;
+    border:1px solid #cde5d8;
+    border-radius:10px;
+    padding:10px;
+    font-size:13px;
+    font-family:inherit;
+    background:#fff;
+    color:#133423;
+}
+
+.buttons{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.buttons button{
+    border:none;
+    border-radius:10px;
+    padding:10px 8px;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    min-height:42px;
+}
+
+.locate{
+    background:#dbf5e8;
+    color:#15553a;
+}
+
+.nearest{
+    background:#145338;
+    color:#fff;
+}
+
+.nearest:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.selected-route{
+    background:#0f7a44;
+    color:#fff;
+}
+
+.selected-route:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.show-all{
+    grid-column:1 / -1;
+    background:#0b6ca8;
+    color:#fff;
+}
+
+.clear{
+    background:#efefef;
+    color:#303030;
+}
+
+.status{
+    border-radius:10px;
+    padding:10px;
+    font-size:12px;
+    line-height:1.7;
+    margin-bottom:10px;
+    background:#eef7f1;
+    border:1px solid #dcece3;
+}
+
+.status.success{
+    background:#e8fff4;
+    border-color:#a7e6c5;
+}
+
+.status.warn{
+    background:#fff7e8;
+    border-color:#edd7a8;
+}
+
+.route-summary{
+    border-radius:10px;
+    padding:10px;
+    font-size:12px;
+    line-height:1.8;
+    margin-bottom:10px;
+    background:#edf6ff;
+    border:1px solid #c8dff7;
+    color:#123f66;
+    min-height:40px;
+}
+
+.results{
+    list-style:none;
+    margin:0;
+    padding:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.site-card{
+    border:1px solid #d5e8dc;
+    border-radius:12px;
+    background:#fff;
+    padding:10px;
+}
+
+.site-card.active{
+    border-color:#2f8c62;
+    box-shadow:0 0 0 2px rgba(47,140,98,0.15);
+}
+
+.site-name{
+    font-size:14px;
+    font-weight:700;
+    color:#145338;
+    margin-bottom:6px;
+}
+
+.site-meta{
+    font-size:12px;
+    color:#446c5b;
+    margin-bottom:4px;
+    line-height:1.6;
+}
+
+.site-actions{
+    display:flex;
+    gap:8px;
+    margin-top:8px;
+    flex-wrap:wrap;
+}
+
+.site-actions button,
+.site-actions a{
+    border:none;
+    border-radius:8px;
+    padding:7px 10px;
+    font-size:12px;
+    font-weight:600;
+    cursor:pointer;
+    text-decoration:none;
+}
+
+.focus-action{
+    background:#e7f6ee;
+    color:#145338;
+}
+
+.route-action{
+    background:#145338;
+    color:#fff;
+}
+
+.maps-action{
+    background:#d8ebff;
+    color:#123f66;
+}
+
+.empty{
+    border:1px dashed #bad7c8;
+    border-radius:10px;
+    padding:12px;
+    font-size:12px;
+    color:#436a5a;
+    background:#fff;
+}
+
+.map-wrap{
+    position:relative;
+    min-width:0;
+}
+
+#map{
+    width:100%;
+    height:calc(100dvh - 56px);
+}
+
+.note{
+    position:absolute;
+    bottom:12px;
+    right:12px;
+    z-index:1000;
+    background:#ffffffde;
+    border:1px solid #d8e8de;
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:11px;
+    color:#3d6856;
+    max-width:min(94%, 420px);
+}
+
+.recycle-marker{
+    background:transparent;
+    border:none;
+}
+
+/* ضمان ظهور بلاطات الخريطة دائماً: بعض المتصفحات تعلق أنيميشن الظهور التدريجي وتتركها شفافة */
+.leaflet-tile{
+    opacity:1 !important;
+}
+
+.recycle-pin{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#12985a;
+    color:#fff;
+    border:2px solid #fff;
+    box-shadow:0 4px 10px rgba(0,0,0,.28);
+    font-size:17px;
+    line-height:1;
+    font-weight:700;
+}
+
+.popup-route-btn{
+    margin-top:8px;
+    border:none;
+    background:#145338;
+    color:#fff;
+    border-radius:8px;
+    padding:8px 10px;
+    cursor:pointer;
+    font-size:12px;
+    min-height:34px;
+    width:100%;
+}
+
+@media(max-width:1200px){
+    .layout{
+        grid-template-columns:minmax(300px,350px) minmax(0,1fr);
+    }
+}
+
+@media(max-width:960px){
+    .topbar{
+        justify-content:center;
+        text-align:center;
+    }
+
+    .top-links{
+        justify-content:center;
+    }
+
+    .layout{
+        grid-template-columns:1fr;
+        grid-template-rows:auto minmax(320px,56dvh);
+    }
+
+    .panel{
+        border-left:none;
+        border-bottom:1px solid #dbece1;
+    }
+
+    #map{
+        height:min(56dvh, 520px);
+    }
+}
+
+@media(max-width:760px){
+    .top-links{
+        width:100%;
+    }
+
+    .top-links a{
+        flex:1 1 calc(50% - 8px);
+    }
+
+    .buttons{
+        grid-template-columns:1fr;
+    }
+
+    .show-all{
+        grid-column:auto;
+    }
+
+    .site-actions button,
+    .site-actions a{
+        flex:1 1 100%;
+        text-align:center;
+    }
+
+    .note{
+        right:8px;
+        left:8px;
+        bottom:8px;
+        font-size:10px;
+        max-width:none;
+    }
+
+    .control input,
+    .control select{
+        font-size:16px;
+    }
+}
+
+@media(max-width:520px){
+    .brand{
+        width:100%;
+        justify-content:center;
+    }
+
+    .brand span{
+        display:none;
+    }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="brand">
+        <img src="logo.png" alt="دوّرها">
+        <span>دوّرها | خريطة مراكز إعادة التدوير في الأردن</span>
+    </div>
+    <div class="top-links">
+        <a href="indx.html">الرئيسية</a>
+        <a href="scan.html">صفحة الفحص</a>
+        <a href="about.html">تعرف علينا</a>
+    </div>
+</header>
+
+<div class="layout">
+    <aside class="panel">
+        <h1>المواقع المتاحة</h1>
+        <p class="hint">تم توزيع المواقع على جميع محافظات الأردن مع إدراج المواقع التي أرسلتِها. زر الأقرب يعمل فقط عند وجود نتيجة فحص سابقة صالحة.</p>
+
+        <div id="scanInfo" class="scan-info"></div>
+
+        <div class="control">
+            <input id="searchInput" type="text" placeholder="بحث بالاسم أو المدينة أو المادة">
+        </div>
+
+        <div class="control">
+            <select id="materialFilter"></select>
+        </div>
+
+        <div class="control">
+            <select id="cityFilter"></select>
+        </div>
+
+        <div class="buttons">
+            <button class="locate" id="locateBtn">تحديد موقعي</button>
+            <button class="nearest" id="nearestBtn">أقرب مصنع لموقعي الحالي</button>
+            <button class="selected-route" id="selectedRouteBtn" disabled>إرشاد للمصنع المحدد</button>
+            <button class="show-all" id="showAllBtn">رؤية جميع المصانع على خريطة الأردن</button>
+            <button class="clear" id="clearRouteBtn">مسح المسار</button>
+            <button class="clear" id="resetBtn">إعادة ضبط الفلاتر</button>
+        </div>
+
+        <div id="statusBox" class="status">جاهز لعرض المواقع.</div>
+        <div id="routeSummary" class="route-summary"></div>
+
+        <ul id="resultsList" class="results"></ul>
+    </aside>
+
+    <section class="map-wrap">
+        <div id="map"></div>
+        <div class="note">الخريطة تعرض مواقع تدوير موزعة على جميع محافظات الأردن + المواقع التي أرسلتِها، مع إشارات ♻ واضحة.</div>
+    </section>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const AUTH_KEY = "dorha_auth";
+const SCAN_RESULT_KEY = "dorha_scan_result";
+
+const MATERIAL_LABELS = {
+    plastic: "بلاستيك",
+    paper: "ورق",
+    glass: "زجاج",
+    metal: "معادن",
+    electronics: "إلكترونيات"
+};
+
+const RECYCLING_SITES = [
+    // مواقع من المستخدم
+    {
+        id: "nimrini",
+        name: "النمريني لإعادة تدوير الورق",
+        city: "إربد",
+        lat: 32.5731375,
+        lng: 35.8730781,
+        address: "ش. أحمد عمر مفلح - إربد",
+        materials: ["paper"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "ورق، كرتون",
+        mapsUrl: "https://maps.app.goo.gl/ANdrsep2yxX9EY6J9"
+    },
+    {
+        id: "khobaraa",
+        name: "شركة الخبراء",
+        city: "جرش",
+        lat: 32.27194,
+        lng: 35.90008,
+        address: "جرش - الأردن",
+        materials: ["paper"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "ورق، كرتون",
+        mapsUrl: "https://www.google.com/maps?q=32.27194,35.90008&z=17&hl=en"
+    },
+    {
+        id: "jes",
+        name: "جمعية البيئة الأردنية",
+        city: "عمّان",
+        lat: 32.039583,
+        lng: 35.9094638,
+        address: "عمّان - الأردن",
+        materials: ["paper", "plastic", "glass", "metal"],
+        compensation: "بدون مقابل",
+        service: "خدمة جمع من الموقع",
+        acceptedItems: "مواد إعادة التدوير المتنوعة",
+        mapsUrl: "https://www.google.com/maps?q=32.039583,35.9094638&z=17&hl=en"
+    },
+    {
+        id: "sal-school",
+        name: "مدرسة سال الثانوية الشاملة للبنات",
+        city: "الرمثا",
+        lat: 32.5751875,
+        lng: 35.9168125,
+        address: "الرمثا - الأردن",
+        materials: ["paper"],
+        compensation: "لا يوجد",
+        service: "نقطة تجميع داخل المدرسة",
+        acceptedItems: "كتب، ورق",
+        mapsUrl: "https://maps.app.goo.gl/xFsDM51scFsMs4WY8"
+    },
+    {
+        id: "fatima-zahra-school",
+        name: "مدرسة فاطمة الزهراء الثانوية الشاملة للبنات",
+        city: "إربد",
+        lat: 32.5625625,
+        lng: 35.8660156,
+        address: "إربد - الأردن",
+        materials: ["paper"],
+        compensation: "لا يوجد",
+        service: "نقطة تجميع داخل المدرسة",
+        acceptedItems: "كتب، ورق",
+        approval: "تم",
+        mapsUrl: "https://maps.app.goo.gl/FAMhW7F6JJ2AqxmD7"
+    },
+
+    // عمّان
+    {
+        id: "amman-sahab",
+        name: "مصنع تدوير البلاستيك - سحاب",
+        city: "عمّان",
+        lat: 31.873,
+        lng: 36.012,
+        address: "المنطقة الصناعية - سحاب",
+        materials: ["plastic"],
+        compensation: "مقابل مادي حسب الوزن",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "عبوات بلاستيكية، بلاستيك صلب",
+        mapsUrl: "https://www.google.com/maps?q=31.873,36.012&z=16&hl=ar"
+    },
+    {
+        id: "amman-marka",
+        name: "مركز فرز المعادن والإلكترونيات - ماركا",
+        city: "عمّان",
+        lat: 31.995,
+        lng: 35.991,
+        address: "ماركا الشمالية",
+        materials: ["metal", "electronics"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "خردة معدنية، أجهزة إلكترونية",
+        mapsUrl: "https://www.google.com/maps?q=31.995,35.991&z=16&hl=ar"
+    },
+    {
+        id: "amman-qweismeh",
+        name: "مركز القويسمة للتدوير",
+        city: "عمّان",
+        lat: 31.921,
+        lng: 35.972,
+        address: "القويسمة",
+        materials: ["paper", "plastic", "glass"],
+        compensation: "بدون مقابل",
+        service: "استلام مباشر + حملات مجتمعية",
+        acceptedItems: "ورق، بلاستيك، زجاج",
+        mapsUrl: "https://www.google.com/maps?q=31.921,35.972&z=16&hl=ar"
+    },
+
+    // الزرقاء
+    {
+        id: "zarqa-hussein",
+        name: "مصنع تدوير متعدد المواد - الزرقاء",
+        city: "الزرقاء",
+        lat: 32.084,
+        lng: 36.095,
+        address: "المنطقة الصناعية - الزرقاء",
+        materials: ["plastic", "paper", "metal"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "بلاستيك، ورق، معادن",
+        mapsUrl: "https://www.google.com/maps?q=32.084,36.095&z=16&hl=ar"
+    },
+    {
+        id: "zarqa-russeifa",
+        name: "مركز الرصيفة لاسترجاع المواد",
+        city: "الرصيفة",
+        lat: 32.015,
+        lng: 36.047,
+        address: "الرصيفة - الزرقاء",
+        materials: ["paper", "plastic"],
+        compensation: "لا يوجد",
+        service: "نقطة تجميع مجتمعية",
+        acceptedItems: "ورق، كرتون، بلاستيك",
+        mapsUrl: "https://www.google.com/maps?q=32.015,36.047&z=16&hl=ar"
+    },
+
+    // إربد
+    {
+        id: "irbid-industrial",
+        name: "مركز تدوير الورق - إربد",
+        city: "إربد",
+        lat: 32.545,
+        lng: 35.857,
+        address: "مدينة الحسن الصناعية",
+        materials: ["paper"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "ورق، كرتون، كتب",
+        mapsUrl: "https://www.google.com/maps?q=32.545,35.857&z=16&hl=ar"
+    },
+    {
+        id: "irbid-tech",
+        name: "مركز إعادة تدوير الإلكترونيات - إربد",
+        city: "إربد",
+        lat: 32.556,
+        lng: 35.846,
+        address: "إربد الصناعية",
+        materials: ["electronics", "metal"],
+        compensation: "مقابل مادي محدود",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "أجهزة إلكترونية، أسلاك، معادن",
+        mapsUrl: "https://www.google.com/maps?q=32.556,35.846&z=16&hl=ar"
+    },
+
+    // عجلون
+    {
+        id: "ajloun-green-center",
+        name: "مركز عجلون الأخضر للتدوير",
+        city: "عجلون",
+        lat: 32.333,
+        lng: 35.751,
+        address: "عجلون - وسط المدينة",
+        materials: ["paper", "plastic", "glass"],
+        compensation: "لا يوجد",
+        service: "نقطة تجميع",
+        acceptedItems: "ورق، بلاستيك، زجاج",
+        mapsUrl: "https://www.google.com/maps?q=32.333,35.751&z=16&hl=ar"
+    },
+    {
+        id: "anjara-recycle",
+        name: "مركز عنجرة لإعادة التدوير",
+        city: "عنجرة",
+        lat: 32.307,
+        lng: 35.761,
+        address: "عنجرة - عجلون",
+        materials: ["paper", "plastic"],
+        compensation: "بدون مقابل",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "ورق، كرتون، بلاستيك",
+        mapsUrl: "https://www.google.com/maps?q=32.307,35.761&z=16&hl=ar"
+    },
+
+    // جرش
+    {
+        id: "jerash-green",
+        name: "مركز جرش لإعادة الاستخدام",
+        city: "جرش",
+        lat: 32.279,
+        lng: 35.899,
+        address: "مدخل جرش",
+        materials: ["paper", "plastic"],
+        compensation: "لا يوجد",
+        service: "نقطة تجميع",
+        acceptedItems: "ورق، بلاستيك",
+        mapsUrl: "https://www.google.com/maps?q=32.279,35.899&z=16&hl=ar"
+    },
+    {
+        id: "jerash-sakeb",
+        name: "مركز ساكب للفرز والتدوير",
+        city: "ساكب",
+        lat: 32.316,
+        lng: 35.866,
+        address: "ساكب - جرش",
+        materials: ["plastic", "glass"],
+        compensation: "مقابل مادي بسيط",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "بلاستيك، زجاج",
+        mapsUrl: "https://www.google.com/maps?q=32.316,35.866&z=16&hl=ar"
+    },
+
+    // البلقاء
+    {
+        id: "salt-balqa",
+        name: "مركز التدوير الشامل - السلط",
+        city: "السلط",
+        lat: 32.040,
+        lng: 35.728,
+        address: "قرب السلط",
+        materials: ["paper", "plastic", "glass"],
+        compensation: "بدون مقابل",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "ورق، بلاستيك، زجاج",
+        mapsUrl: "https://www.google.com/maps?q=32.04,35.728&z=16&hl=ar"
+    },
+    {
+        id: "ain-basha-recycle",
+        name: "مركز عين الباشا للتدوير",
+        city: "عين الباشا",
+        lat: 32.112,
+        lng: 35.775,
+        address: "عين الباشا - البلقاء",
+        materials: ["paper", "plastic"],
+        compensation: "لا يوجد",
+        service: "نقطة تجميع",
+        acceptedItems: "كتب، ورق، بلاستيك",
+        mapsUrl: "https://www.google.com/maps?q=32.112,35.775&z=16&hl=ar"
+    },
+
+    // مادبا
+    {
+        id: "madaba-glass",
+        name: "مصنع تدوير الزجاج - مادبا",
+        city: "مادبا",
+        lat: 31.719,
+        lng: 35.793,
+        address: "جنوب مادبا",
+        materials: ["glass"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "زجاجات وعبوات زجاجية",
+        mapsUrl: "https://www.google.com/maps?q=31.719,35.793&z=16&hl=ar"
+    },
+    {
+        id: "dhiban-recycle",
+        name: "مركز ذيبان لاسترجاع المواد",
+        city: "ذيبان",
+        lat: 31.500,
+        lng: 35.783,
+        address: "ذيبان - مادبا",
+        materials: ["paper", "plastic", "metal"],
+        compensation: "مقابل مادي حسب النوع",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "ورق، بلاستيك، معادن",
+        mapsUrl: "https://www.google.com/maps?q=31.5,35.783&z=16&hl=ar"
+    },
+
+    // المفرق
+    {
+        id: "mafraq-ewaste",
+        name: "مركز النفايات الإلكترونية - المفرق",
+        city: "المفرق",
+        lat: 32.340,
+        lng: 36.206,
+        address: "المنطقة الحرفية",
+        materials: ["electronics", "metal"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "أجهزة إلكترونية وخردة معدنية",
+        mapsUrl: "https://www.google.com/maps?q=32.34,36.206&z=16&hl=ar"
+    },
+    {
+        id: "rehab-center",
+        name: "مركز رحاب للتدوير",
+        city: "الرحاب",
+        lat: 32.330,
+        lng: 36.093,
+        address: "الرحاب - المفرق",
+        materials: ["paper", "plastic"],
+        compensation: "لا يوجد",
+        service: "نقطة تجميع",
+        acceptedItems: "ورق، كرتون، بلاستيك",
+        mapsUrl: "https://www.google.com/maps?q=32.33,36.093&z=16&hl=ar"
+    },
+
+    // الكرك
+    {
+        id: "karak-recycle",
+        name: "مصنع تدوير المعادن - الكرك",
+        city: "الكرك",
+        lat: 31.182,
+        lng: 35.703,
+        address: "الكرك الصناعية",
+        materials: ["metal", "paper"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "معادن، ورق، كرتون",
+        mapsUrl: "https://www.google.com/maps?q=31.182,35.703&z=16&hl=ar"
+    },
+    {
+        id: "ghor-safi-center",
+        name: "مركز غور الصافي للتدوير",
+        city: "غور الصافي",
+        lat: 31.036,
+        lng: 35.466,
+        address: "الأغوار الجنوبية - الكرك",
+        materials: ["plastic", "glass"],
+        compensation: "بدون مقابل",
+        service: "نقطة تجميع",
+        acceptedItems: "عبوات بلاستيكية وزجاجية",
+        mapsUrl: "https://www.google.com/maps?q=31.036,35.466&z=16&hl=ar"
+    },
+
+    // الطفيلة
+    {
+        id: "tafileh-green",
+        name: "مركز تدوير البلاستيك - الطفيلة",
+        city: "الطفيلة",
+        lat: 30.838,
+        lng: 35.604,
+        address: "وسط الطفيلة",
+        materials: ["plastic", "paper"],
+        compensation: "لا يوجد",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "بلاستيك، ورق",
+        mapsUrl: "https://www.google.com/maps?q=30.838,35.604&z=16&hl=ar"
+    },
+    {
+        id: "besira-center",
+        name: "مركز بصيرا لإعادة التدوير",
+        city: "بصيرا",
+        lat: 30.739,
+        lng: 35.700,
+        address: "بصيرا - الطفيلة",
+        materials: ["paper", "metal"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "ورق، معادن",
+        mapsUrl: "https://www.google.com/maps?q=30.739,35.7&z=16&hl=ar"
+    },
+
+    // معان
+    {
+        id: "maan-recovery",
+        name: "مركز الاسترجاع البيئي - معان",
+        city: "معان",
+        lat: 30.194,
+        lng: 35.737,
+        address: "المدينة الصناعية",
+        materials: ["plastic", "paper", "metal"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "بلاستيك، ورق، معادن",
+        mapsUrl: "https://www.google.com/maps?q=30.194,35.737&z=16&hl=ar"
+    },
+    {
+        id: "shobak-center",
+        name: "مركز الشوبك للتدوير",
+        city: "الشوبك",
+        lat: 30.525,
+        lng: 35.555,
+        address: "الشوبك - معان",
+        materials: ["paper", "plastic", "glass"],
+        compensation: "لا يوجد",
+        service: "نقطة تجميع",
+        acceptedItems: "كتب، ورق، بلاستيك، زجاج",
+        mapsUrl: "https://www.google.com/maps?q=30.525,35.555&z=16&hl=ar"
+    },
+
+    // العقبة
+    {
+        id: "aqaba-blue",
+        name: "مصنع تدوير الزجاج والبلاستيك - العقبة",
+        city: "العقبة",
+        lat: 29.539,
+        lng: 35.011,
+        address: "المنطقة الجنوبية",
+        materials: ["glass", "plastic"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "زجاج وبلاستيك",
+        mapsUrl: "https://www.google.com/maps?q=29.539,35.011&z=16&hl=ar"
+    },
+    {
+        id: "aqaba-industrial-recycle",
+        name: "مركز العقبة الصناعي للتدوير",
+        city: "العقبة",
+        lat: 29.526,
+        lng: 35.005,
+        address: "المنطقة الصناعية - العقبة",
+        materials: ["metal", "electronics", "plastic"],
+        compensation: "مقابل مادي",
+        service: "استلام مباشر في الموقع",
+        acceptedItems: "معادن، إلكترونيات، بلاستيك",
+        mapsUrl: "https://www.google.com/maps?q=29.526,35.005&z=16&hl=ar"
+    }
+];
+
+function getAuthData(){
+    const raw = localStorage.getItem(AUTH_KEY);
+    if(!raw){
+        return null;
+    }
+    try{
+        const parsed = JSON.parse(raw);
+        if(!parsed || !parsed.method || !parsed.identifier){
+            return null;
+        }
+        return parsed;
+    }catch(error){
+        localStorage.removeItem(AUTH_KEY);
+        return null;
+    }
+}
+
+function ensureAuthData(){
+    const existing = getAuthData();
+    if(existing){
+        return existing;
+    }
+
+    // Allow the app to run on fresh devices without a separate login page.
+    const guest = {
+        method: "guest",
+        identifier: "guest-" + Date.now()
+    };
+    localStorage.setItem(AUTH_KEY, JSON.stringify(guest));
+    return guest;
+}
+
+const auth = ensureAuthData();
+
+const searchInput = document.getElementById("searchInput");
+const materialFilter = document.getElementById("materialFilter");
+const cityFilter = document.getElementById("cityFilter");
+const locateBtn = document.getElementById("locateBtn");
+const nearestBtn = document.getElementById("nearestBtn");
+const selectedRouteBtn = document.getElementById("selectedRouteBtn");
+const showAllBtn = document.getElementById("showAllBtn");
+const clearRouteBtn = document.getElementById("clearRouteBtn");
+const resetBtn = document.getElementById("resetBtn");
+const resultsList = document.getElementById("resultsList");
+const statusBox = document.getElementById("statusBox");
+const routeSummary = document.getElementById("routeSummary");
+const scanInfo = document.getElementById("scanInfo");
+
+const urlParams = new URLSearchParams(window.location.search);
+const mode = urlParams.get("mode");
+
+const map = L.map("map", {zoomControl:true, fadeAnimation:false}).setView([31.25, 36.25], 7);
+
+// سلسلة خوادم خلفية الخريطة: تنتقل تلقائياً للخادم التالي إذا رفض أحدها الطلبات (حظر 403 أو عطل)
+const BASE_LAYERS = [
+    L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 19,
+        attribution: "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics"
+    }),
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap"
+    }),
+    L.tileLayer("https://tile.openstreetmap.de/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: "&copy; OpenStreetMap contributors (FOSSGIS)"
+    })
+];
+
+let baseLayerIndex = 0;
+let baseTileErrors = 0;
+
+function useBaseLayer(index){
+    const current = BASE_LAYERS[baseLayerIndex];
+    if(map.hasLayer(current)){
+        map.removeLayer(current);
+    }
+    baseLayerIndex = index;
+    baseTileErrors = 0;
+    BASE_LAYERS[baseLayerIndex].addTo(map);
+}
+
+function onBaseTileError(){
+    baseTileErrors++;
+    if(baseTileErrors === 6 && baseLayerIndex + 1 < BASE_LAYERS.length){
+        useBaseLayer(baseLayerIndex + 1);
+        setStatus("تعذّر تحميل خادم الخريطة الأساسي، تم التحويل تلقائياً لخادم بديل.", "warn");
+    }
+}
+
+useBaseLayer(0);
+BASE_LAYERS.forEach(function(layer){
+    layer.on("tileerror", onBaseTileError);
+});
+
+const recycleIcon = L.divIcon({
+    className: "recycle-marker",
+    html: '<div class="recycle-pin">♻</div>',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -16]
+});
+
+const markerLayer = L.layerGroup().addTo(map);
+const markerById = new Map();
+
+let filteredSites = RECYCLING_SITES.slice();
+let selectedSiteId = null;
+let userLocation = null;
+let userMarker = null;
+let routeLayer = null;
+
+function setStatus(message, type){
+    statusBox.textContent = message;
+    statusBox.className = "status " + (type || "");
+}
+
+function getScanResult(){
+    const raw = sessionStorage.getItem(SCAN_RESULT_KEY);
+    if(!raw){
+        return null;
+    }
+    try{
+        return JSON.parse(raw);
+    }catch(error){
+        return null;
+    }
+}
+
+function getValidScanResult(scanResult){
+    if(!scanResult || scanResult.recyclable !== true){
+        return null;
+    }
+    const material = String(scanResult.material || "").toLowerCase().trim();
+    if(!MATERIAL_LABELS[material]){
+        return null;
+    }
+    return {
+        material: material,
+        materialLabel: scanResult.materialLabel || MATERIAL_LABELS[material]
+    };
+}
+
+function materialName(key){
+    return MATERIAL_LABELS[key] || key;
+}
+
+function formatMaterials(site){
+    return site.materials.map(materialName).join("، ");
+}
+
+function escapeHtml(text){
+    return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function fillMaterialFilter(){
+    const materialOptions = Object.keys(MATERIAL_LABELS)
+        .map(function(key){
+            return '<option value="' + key + '">' + materialName(key) + "</option>";
+        }).join("");
+
+    materialFilter.innerHTML = '<option value="all">كل المواد</option>' + materialOptions;
+}
+
+function fillCityFilter(){
+    const cities = Array.from(new Set(RECYCLING_SITES.map(function(site){ return site.city; }))).sort();
+    const cityOptions = cities.map(function(city){
+        return '<option value="' + city + '">' + city + "</option>";
+    }).join("");
+    cityFilter.innerHTML = '<option value="all">كل المدن</option>' + cityOptions;
+}
+
+function popupDetails(site){
+    const details = [
+        "المقابل: " + site.compensation,
+        "الخدمة: " + site.service,
+        "المواد المقبولة: " + formatMaterials(site),
+        "تفاصيل المواد: " + site.acceptedItems
+    ];
+    if(site.approval){
+        details.push("الموافقة: " + site.approval);
+    }
+    return details.map(function(line){ return escapeHtml(line); }).join("<br>");
+}
+
+function selectedSite(){
+    if(!selectedSiteId){
+        return null;
+    }
+    return RECYCLING_SITES.find(function(item){ return item.id === selectedSiteId; }) || null;
+}
+
+function updateSelectedRouteButton(){
+    const site = selectedSite();
+    if(!site){
+        selectedRouteBtn.disabled = true;
+        selectedRouteBtn.textContent = "إرشاد للمصنع المحدد";
+        return;
+    }
+
+    selectedRouteBtn.disabled = false;
+    selectedRouteBtn.textContent = "إرشاد إلى: " + site.name;
+}
+
+async function routeToSelectedSite(){
+    const site = selectedSite();
+    if(!site){
+        setStatus("حددي مصنعًا من الخريطة أولاً.", "warn");
+        return;
+    }
+    await drawRouteToSite(site);
+}
+
+window.routeToFactoryFromMap = async function(siteId){
+    const site = RECYCLING_SITES.find(function(item){ return item.id === siteId; });
+    if(!site){
+        return false;
+    }
+    focusSite(siteId, true);
+    await drawRouteToSite(site);
+    return false;
+};
+
+function renderMarkers(sites){
+    markerLayer.clearLayers();
+    markerById.clear();
+
+    sites.forEach(function(site){
+        const marker = L.marker([site.lat, site.lng], {icon: recycleIcon}).addTo(markerLayer);
+        marker.bindPopup(
+            "<strong>♻ " + escapeHtml(site.name) + "</strong><br>" +
+            escapeHtml(site.city + " - " + site.address) + "<br>" +
+            popupDetails(site) + "<br>" +
+            '<button class="popup-route-btn" onclick="return window.routeToFactoryFromMap(\'' + site.id + '\')">إرشاد الطريق لهذا المصنع</button>'
+        );
+        marker.on("click", function(){
+            focusSite(site.id, false);
+        });
+        markerById.set(site.id, marker);
+    });
+}
+
+function buildMapsLink(site){
+    const destination = site.lat + "," + site.lng;
+    if(userLocation){
+        const origin = userLocation.lat + "," + userLocation.lng;
+        return "https://www.google.com/maps/dir/?api=1&origin=" + encodeURIComponent(origin) + "&destination=" + encodeURIComponent(destination) + "&travelmode=driving";
+    }
+    if(site.mapsUrl){
+        return site.mapsUrl;
+    }
+    return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(destination);
+}
+
+function renderResults(sites){
+    if(!sites.length){
+        resultsList.innerHTML = '<li class="empty">لا توجد نتائج مطابقة للفلاتر الحالية.</li>';
+        return;
+    }
+
+    resultsList.innerHTML = sites.map(function(site){
+        const isActive = site.id === selectedSiteId ? " active" : "";
+        const approvalLine = site.approval ? '<div class="site-meta">الموافقة: ' + escapeHtml(site.approval) + "</div>" : "";
+        return (
+            '<li class="site-card' + isActive + '">' +
+                '<div class="site-name">♻ ' + escapeHtml(site.name) + "</div>" +
+                '<div class="site-meta">المدينة: ' + escapeHtml(site.city) + "</div>" +
+                '<div class="site-meta">الموقع: ' + escapeHtml(site.address) + "</div>" +
+                '<div class="site-meta">المقابل: ' + escapeHtml(site.compensation) + "</div>" +
+                '<div class="site-meta">الخدمة: ' + escapeHtml(site.service) + "</div>" +
+                '<div class="site-meta">المواد المقبولة: ' + escapeHtml(formatMaterials(site)) + "</div>" +
+                '<div class="site-meta">تفاصيل المواد: ' + escapeHtml(site.acceptedItems) + "</div>" +
+                approvalLine +
+                '<div class="site-actions">' +
+                    '<button class="focus-action" data-action="focus" data-id="' + site.id + '">عرض</button>' +
+                    '<button class="route-action" data-action="route" data-id="' + site.id + '">إرشاد الطريق</button>' +
+                    '<a class="maps-action" href="' + buildMapsLink(site) + '" target="_blank" rel="noopener">خرائط جوجل</a>' +
+                "</div>" +
+            "</li>"
+        );
+    }).join("");
+}
+
+function applyFilters(fitToBounds){
+    const search = searchInput.value.trim().toLowerCase();
+    const selectedMaterial = materialFilter.value;
+    const selectedCity = cityFilter.value;
+
+    filteredSites = RECYCLING_SITES.filter(function(site){
+        const matchesMaterial = selectedMaterial === "all" || site.materials.includes(selectedMaterial);
+        const matchesCity = selectedCity === "all" || site.city === selectedCity;
+        const searchableText = [
+            site.name,
+            site.city,
+            site.address,
+            site.compensation,
+            site.service,
+            site.acceptedItems,
+            formatMaterials(site)
+        ].join(" ").toLowerCase();
+        const matchesSearch = !search || searchableText.includes(search);
+        return matchesMaterial && matchesCity && matchesSearch;
+    });
+
+    if(selectedSiteId && !filteredSites.some(function(site){ return site.id === selectedSiteId; })){
+        selectedSiteId = null;
+    }
+
+    updateSelectedRouteButton();
+    renderMarkers(filteredSites);
+    renderResults(filteredSites);
+
+    if(!filteredSites.length){
+        setStatus("لا توجد مواقع مطابقة للبحث الحالي.", "warn");
+        return;
+    }
+
+    setStatus("تم العثور على " + filteredSites.length + " موقع.");
+
+    if(fitToBounds){
+        const bounds = L.latLngBounds(filteredSites.map(function(site){
+            return [site.lat, site.lng];
+        }));
+        map.fitBounds(bounds, {padding:[30, 30]});
+    }
+}
+
+function focusSite(siteId, showPopup){
+    const site = RECYCLING_SITES.find(function(item){ return item.id === siteId; });
+    if(!site){
+        return;
+    }
+
+    selectedSiteId = siteId;
+    updateSelectedRouteButton();
+    renderResults(filteredSites);
+
+    map.setView([site.lat, site.lng], 12);
+    const marker = markerById.get(siteId);
+    if(showPopup !== false && marker){
+        marker.openPopup();
+    }
+
+    setStatus("تم تحديد الموقع: " + site.name + ".");
+}
+
+function haversineKm(lat1, lng1, lat2, lng2){
+    const toRad = function(value){ return value * Math.PI / 180; };
+    const R = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function clearRoute(){
+    if(routeLayer){
+        map.removeLayer(routeLayer);
+        routeLayer = null;
+    }
+    routeSummary.textContent = "";
+}
+
+function locateUser(){
+    return new Promise(function(resolve, reject){
+        if(userLocation){
+            resolve(userLocation);
+            return;
+        }
+
+        if(!navigator.geolocation){
+            setStatus("المتصفح لا يدعم خدمة تحديد الموقع.", "warn");
+            reject(new Error("Geolocation not supported"));
+            return;
+        }
+
+        setStatus("جاري تحديد موقعك الحالي...", "success");
+
+        navigator.geolocation.getCurrentPosition(function(position){
+            userLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+
+            if(!userMarker){
+                userMarker = L.circleMarker([userLocation.lat, userLocation.lng], {
+                    radius: 8,
+                    color: "#0f6",
+                    fillColor: "#1d8cff",
+                    fillOpacity: 0.85,
+                    weight: 2
+                }).addTo(map);
+                userMarker.bindPopup("موقعك الحالي");
+            }else{
+                userMarker.setLatLng([userLocation.lat, userLocation.lng]);
+            }
+
+            map.setView([userLocation.lat, userLocation.lng], 11);
+            renderResults(filteredSites);
+            setStatus("تم تحديد موقعك بنجاح.");
+            resolve(userLocation);
+        }, function(){
+            setStatus("تعذّر الوصول لموقعك. فعّل صلاحية الموقع في المتصفح.", "warn");
+            reject(new Error("Cannot get location"));
+        }, {
+            enableHighAccuracy: true,
+            timeout: 12000,
+            maximumAge: 60000
+        });
+    });
+}
+
+function nearestSiteForMaterial(materialKey){
+    if(!userLocation){
+        return null;
+    }
+
+    const pool = RECYCLING_SITES.filter(function(site){
+        return site.materials.includes(materialKey);
+    });
+
+    if(!pool.length){
+        return null;
+    }
+
+    let nearest = null;
+    let shortestDistance = Number.POSITIVE_INFINITY;
+
+    pool.forEach(function(site){
+        const distance = haversineKm(userLocation.lat, userLocation.lng, site.lat, site.lng);
+        if(distance < shortestDistance){
+            shortestDistance = distance;
+            nearest = site;
+        }
+    });
+
+    return {site: nearest, distanceKm: shortestDistance};
+}
+
+async function drawRouteToSite(site, directDistanceKm){
+    if(!site){
+        return;
+    }
+
+    try{
+        await locateUser();
+    }catch(error){
+        return;
+    }
+
+    clearRoute();
+
+    const routeApi = "https://router.project-osrm.org/route/v1/driving/" +
+        userLocation.lng + "," + userLocation.lat + ";" +
+        site.lng + "," + site.lat +
+        "?overview=full&geometries=geojson";
+
+    try{
+        const response = await fetch(routeApi);
+        if(!response.ok){
+            throw new Error("Route request failed");
+        }
+
+        const data = await response.json();
+        if(!data.routes || !data.routes.length){
+            throw new Error("No route data");
+        }
+
+        const route = data.routes[0];
+        const latLngs = route.geometry.coordinates.map(function(point){
+            return [point[1], point[0]];
+        });
+
+        routeLayer = L.polyline(latLngs, {
+            color: "#13a366",
+            weight: 6,
+            opacity: 0.9
+        }).addTo(map);
+
+        map.fitBounds(routeLayer.getBounds(), {padding:[30, 30]});
+
+        const roadDistanceKm = (route.distance / 1000).toFixed(1);
+        const durationMin = Math.round(route.duration / 60);
+        const directKm = typeof directDistanceKm === "number" ? directDistanceKm.toFixed(1) : haversineKm(userLocation.lat, userLocation.lng, site.lat, site.lng).toFixed(1);
+
+        routeSummary.innerHTML = "الأقرب: <strong>" + escapeHtml(site.name) + "</strong><br>" +
+            "المسافة المباشرة: <strong>" + directKm + " كم</strong><br>" +
+            "مسافة الطريق: <strong>" + roadDistanceKm + " كم</strong> | الزمن التقديري: <strong>" + durationMin + " دقيقة</strong>";
+        setStatus("تم رسم مسار الطريق بنجاح.", "success");
+    }catch(error){
+        const directKm = typeof directDistanceKm === "number" ? directDistanceKm.toFixed(1) : haversineKm(userLocation.lat, userLocation.lng, site.lat, site.lng).toFixed(1);
+        routeSummary.innerHTML = "الأقرب: <strong>" + escapeHtml(site.name) + "</strong><br>" +
+            "المسافة المباشرة: <strong>" + directKm + " كم</strong><br>" +
+            "تعذر رسم مسار الطريق داخل الصفحة حاليًا. استخدم خرائط جوجل من بطاقة الموقع.";
+        setStatus("تعذّر رسم المسار الآلي حاليًا. يمكن فتح خرائط جوجل.", "warn");
+    }
+}
+
+function updateNearestLock(scanResult, validScan){
+    if(validScan){
+        nearestBtn.disabled = false;
+        scanInfo.className = "scan-info";
+        scanInfo.textContent = "نتيجة الفحص السابقة صالحة: " + validScan.materialLabel + " | قابل لإعادة التدوير. زر الأقرب مفعل.";
+        return;
+    }
+
+    nearestBtn.disabled = true;
+    scanInfo.className = "scan-info warn";
+
+    if(scanResult && scanResult.recyclable === false){
+        scanInfo.textContent = "آخر فحص غير قابل لإعادة التدوير. زر الأقرب مقفول.";
+        return;
+    }
+
+    scanInfo.textContent = "لا توجد نتيجة فحص سابقة صالحة. زر الأقرب مقفول حتى تنفذ فحصًا صالحًا من صفحة الفحص.";
+}
+
+async function goNearestFromScan(validScan){
+    if(!validScan){
+        setStatus("زر الأقرب مقفول: يلزم فحص سابق صالح وقابل لإعادة التدوير.", "warn");
+        return;
+    }
+
+    try{
+        await locateUser();
+    }catch(error){
+        return;
+    }
+
+    const nearestResult = nearestSiteForMaterial(validScan.material);
+    if(!nearestResult || !nearestResult.site){
+        setStatus("لا يوجد موقع يقبل مادة: " + validScan.materialLabel + ".", "warn");
+        return;
+    }
+
+    focusSite(nearestResult.site.id, true);
+    setStatus(
+        "أقرب موقع لمادة " + validScan.materialLabel + " هو: " + nearestResult.site.name +
+        " على بعد تقريبي " + nearestResult.distanceKm.toFixed(1) + " كم.",
+        "success"
+    );
+
+    await drawRouteToSite(nearestResult.site, nearestResult.distanceKm);
+}
+
+resultsList.addEventListener("click", async function(event){
+    const target = event.target;
+    const action = target.getAttribute("data-action");
+    const siteId = target.getAttribute("data-id");
+
+    if(!action || !siteId){
+        return;
+    }
+
+    const site = RECYCLING_SITES.find(function(item){ return item.id === siteId; });
+    if(!site){
+        return;
+    }
+
+    if(action === "focus"){
+        focusSite(siteId, true);
+        return;
+    }
+
+    if(action === "route"){
+        focusSite(siteId, true);
+        await drawRouteToSite(site);
+    }
+});
+
+searchInput.addEventListener("input", function(){
+    applyFilters(false);
+});
+
+materialFilter.addEventListener("change", function(){
+    applyFilters(false);
+});
+
+cityFilter.addEventListener("change", function(){
+    applyFilters(false);
+});
+
+locateBtn.addEventListener("click", async function(){
+    try{
+        await locateUser();
+    }catch(error){}
+});
+
+const scanResult = getScanResult();
+const validScan = getValidScanResult(scanResult);
+
+nearestBtn.addEventListener("click", async function(){
+    // إعادة قراءة نتيجة الفحص لحظة الضغط حتى تعكس آخر فحص تم إجراؤه
+    const freshResult = getScanResult();
+    const freshValid = getValidScanResult(freshResult);
+    updateNearestLock(freshResult, freshValid);
+    await goNearestFromScan(freshValid);
+});
+
+selectedRouteBtn.addEventListener("click", async function(){
+    await routeToSelectedSite();
+});
+
+showAllBtn.addEventListener("click", function(){
+    searchInput.value = "";
+    materialFilter.value = "all";
+    cityFilter.value = "all";
+    selectedSiteId = null;
+    clearRoute();
+    applyFilters(true);
+    map.setView([31.25, 36.25], 7);
+    setStatus("تم عرض جميع المصانع على خريطة الأردن.", "success");
+});
+
+clearRouteBtn.addEventListener("click", function(){
+    clearRoute();
+    setStatus("تم مسح المسار الحالي.");
+});
+
+resetBtn.addEventListener("click", function(){
+    searchInput.value = "";
+    materialFilter.value = "all";
+    cityFilter.value = "all";
+    selectedSiteId = null;
+    clearRoute();
+    applyFilters(true);
+});
+
+fillMaterialFilter();
+fillCityFilter();
+applyFilters(true);
+updateNearestLock(scanResult, validScan);
+
+if(mode === "nearest"){
+    if(!validScan){
+        setStatus("تعذر تشغيل وضع الأقرب: لا توجد نتيجة فحص صالحة.", "warn");
+    }else{
+        setStatus("جاري تحديد أقرب مصنع بناءً على نتيجة الفحص...", "success");
+        goNearestFromScan(validScan);
+    }
+}
+
+if(mode === "all"){
+    map.setView([31.25, 36.25], 7);
+    setStatus("تم فتح وضع عرض جميع المصانع في الأردن.", "success");
+}
+</script>
+
+</body>
+</html>
